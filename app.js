@@ -1,9 +1,20 @@
 require ('dotenv').config();
 const express = require('express');
 const app = express();
+const session = require('express-session');
+const db = require('./db');
+
 const PORT = process.env.PORT || 4001;
 
-const db = require('./db');
+secret = process.env.SECRET;
+app.use(
+    session({
+        secret,
+        cookie: { maxAge: 1000 * 60 *60 * 24, secure: false, sameSite: "none" },
+        resave: false,
+        saveUninitialized: false
+    })
+);
 
 app.get('/', (req, res) => {
     res.send('Hello World');
@@ -18,6 +29,10 @@ app.get('/test', async(req, res) => {
     dbRes.rows.forEach(row => {
         console.log(row)
     })
+})
+
+app.post('/register', (req, res) => {
+
 })
 
 app.listen(PORT, () => {
