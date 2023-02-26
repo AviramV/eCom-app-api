@@ -13,6 +13,8 @@ const secret = process.env.SECRET;
 
 // ****** MIDDLEWARE ****** //
 
+app.use(express.json());
+
 app.use(
     session({
         secret,
@@ -39,19 +41,19 @@ passport.use(
         } catch (error) {
             return done(error);
         }
-        
+
     })
 );
 
 passport.serializeUser((user, done) => {
-      done(null, {
+    done(null, {
         id: user.id,
         username: user.user_name
     });
 });
 
 passport.deserializeUser((user, done) => {
-     done(null, user)
+    done(null, user)
 })
 
 // ****** ROUTES ****** //
@@ -60,7 +62,7 @@ app.get('/', (req, res) => {
     res.send('Hello World');
 });
 
-app.post('/register', express.json(), async (req, res) => {
+app.post('/register', async (req, res) => {
     const { email, username, password } = req.body;
     try {
         const hashedPassword = await passwordHash(password, 10);
@@ -77,18 +79,50 @@ app.get('/login', (req, res) => {
     res.send(`Hello ${req.user.username}`)
 })
 
-app.post('/login', express.json(), passport.authenticate('local', {failureMessage: true}), (req, res) => {
+app.post('/login', passport.authenticate('local', { failureMessage: true }), (req, res) => {
     res.send(`Logged in as ${req.body.username}`);
 })
 
-app.post('/logout', (req, res) => {
-    const isLoggedIn = req.user;
-    if (!isLoggedIn) return res.send(`Nothing to do here`);
+app.post('/logout', isLoggedIn, (req, res) => {
+    console.log(req.path)
     req.logout(err => {
         if (err) return res.send(err)
         res.send(`Logged out successfully`)
     });
 })
+
+// Product
+
+// get all products
+app.get('/product', async (req, res) => {
+    const productList = await getAllProducts();
+    res.send(productList);
+});
+
+// get a product by id
+app.get('/product/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const product = await getProductById(id);
+        if (!product) return res.status(404).send('Product not found');
+        res.send(product);
+    } catch (error) {
+        console.log(error)
+        return res.status(500).send('Error getting product')
+    }
+});
+
+// add product to database
+app.post('/product', isLoggedIn, async (req, res) => {
+    try {
+        const { productName, price } = req.body;
+        const newProduct = await addProduct(productName, price);
+        res.status(201).send(newProduct);
+    } catch (err) {
+        console.log('Error insering product into database. ', err.stack);
+        res.status(500).send('Failed to add product to database');
+    }
+});
 
 app.listen(PORT, () => {
     console.info(`Server running on port ${PORT}`);
@@ -112,4 +146,32 @@ async function passwordHash(password, saltRounds) {
 async function getUser(username) {
     const user = await db.query(`SELECT * FROM users WHERE user_name = $1`, [username]);
     return user.rows[0];
+}
+
+// Add product to databse
+async function addProduct(productName, price) {
+    const response = await db.query(`insert into products(name, price) values ($1, $2) RETURNING *`,
+        [productName, price]);
+    const newProduct = response.rows[0];
+    if (!newProduct) throw new Error("Product not inserted into database");
+    return newProduct;
+}
+
+async function getAllProducts() {
+    const response = await db.query(`SELECT * FROM products`)
+    const productList = response.rows;
+    return productList;
+}
+
+async function getProductById(id) {
+    const response = await db.query(`SELECT * FROM products WHERE id = $1`, [id]);
+    if (!response.rows.length) return null;
+    const product = response.rows[0];
+    return product;
+}
+
+function isLoggedIn(req, res, next) {
+    const message = req.path === '/logout' ? 'Nothing to do here' : 'Please log in first';
+    if (!req.isAuthenticated()) return res.status(401).send(message);
+    next();
 }
