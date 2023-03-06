@@ -3,15 +3,11 @@ const { createCart, getCartByUserId, deleteCart } = require('../services/cartSer
 const { loadCart, addToCart, updateItem, removeItem } = require('../services/cartItemsService');
 const { getProductById } = require('../services/productService');
 const { createOrder, addToOrdersProducts } = require('../services/orderServices');
+const { isLoggedIn } = require('../services/authService');
 const router = express.Router();
 
 module.exports = app => {
-    app.use('/cart', router);
-    // Allow only logged-in users to access carts
-    router.use((req, res, next) => {
-        if (!req.user) return res.status(401).send('Please log in first');
-        next();
-    })
+    app.use('/cart', isLoggedIn, router); // Require user log-in "/cart" route
     // Create a new cart
     router.post('/', async (req, res) => {
         try {
