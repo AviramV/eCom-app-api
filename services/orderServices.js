@@ -1,8 +1,8 @@
 const db = require("../db")
 
 module.exports = {
+    // Create a new order form cart items
     async createOrder(userId, cart) {
-        
         const statement = `INSERT INTO orders 
         (status, user_id, total, created) 
         VALUES ($1, $2, $3, $4)
@@ -13,7 +13,7 @@ module.exports = {
         if (!newOrder.rows.length) return null;
         return newOrder.rows[0];
     },
-
+    // Add order items to orders_items table
     async addToOrdersProducts(orderId, items) {
         for (const item of items) {
           const { id, qty } = item;
@@ -24,6 +24,28 @@ module.exports = {
           const values = [orderId, id, qty];
           await db.query(statement, values);
         }
+      },
+
+      async getOrdersByUserId(userId) {
+        const userOrders = await db.query(`SELECT * from orders WHERE user_id = $1`, [userId]);
+        if (!userOrders.rows.length) return null;
+        return userOrders.rows;
+      },
+
+      async getOrderByOrderId(orderId) {
+        const order = await db.query(`SELECT * FROM orders WHERE id = $1`, [orderId]);
+        if (!order.rows.length) return null;
+        return order.rows[0];
+      },
+
+      async updtaeOrderStatus(orderId, status) {
+        const updatedOrder = await db.query(`UPDATE orders
+         SET status = $1, modified = $2 
+         WHERE id = $3 
+         RETURNING *`, 
+         [status, new Date(), orderId]);
+        if (!updatedOrder.rows.length) return null;
+        return updatedOrder.rows[0];
       }
       
 }
