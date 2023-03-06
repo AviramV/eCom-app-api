@@ -7,6 +7,7 @@ const passport = require('passport');
 const authRouter = require('./routes/auth')
 const productsRouter = require('./routes/products');
 const userRouter = require('./routes/user');
+const cartRouter = require('./routes/cart');
 
 const PORT = process.env.PORT || 4001;
 
@@ -26,6 +27,9 @@ productsRouter(app);
 
 // user route
 userRouter(app);
+
+// cart route
+cartRouter(app);
 
 app.listen(PORT, () => {
     console.info(`Server running on port ${PORT}`);
