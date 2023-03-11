@@ -10,12 +10,12 @@ module.exports = (app) => {
             const { id } = req.params;
             const user = await getUserById(id);
 
-            if (!user) throw Error('user not found');
+            if (!user) return res.status(404).send('user not found');
 
             res.status(200).send(user);
 
         } catch (error) {
-            res.send(error.message)
+            res.status(500).send(error.message)
         }
     });
 
@@ -25,7 +25,7 @@ module.exports = (app) => {
             const data = req.body;
 
             const user = await getUserById(id);
-            if (!user) throw Error('user not found');
+            if (!user) return res.status(404).send('user not found');
 
             const response = await updateUser(id, data);
             res.send(response);
@@ -39,7 +39,7 @@ module.exports = (app) => {
             const { id } = req.params;
 
             const user = await getUserById(id);
-            if (!user) throw Error('user not found');
+            if (!user) return res.status(404).send('user not found');
 
             await deleteUser(id);
             res.status(204).send('Successfully deleted user');
