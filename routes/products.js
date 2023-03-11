@@ -8,8 +8,13 @@ module.exports = (app) => {
     app.use('/products', router);
     // get all products
     router.get('/', async (req, res) => {
-        const productList = await getAllProducts();
-        res.send(productList);
+        try {
+            const productList = await getAllProducts();
+            res.send(productList);
+        } catch (error) {
+            console.log(error)
+            res.status(500).send('Something went wrong')
+        }
     });
     
     // get a product by id
