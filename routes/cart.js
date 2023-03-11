@@ -14,10 +14,10 @@ module.exports = app => {
             const { id } = req.user;
 
             const hasCart = await getCartByUserId(id);
-            if (hasCart) return res.send('Already has an active cart')
+            if (hasCart) return res.status(409).send('Already has an active cart')
 
             const cart = await createCart(id);
-            res.send(cart);
+            res.status(201).send(cart);
         } catch (error) {
             res.send(error.message)
         }
@@ -28,7 +28,7 @@ module.exports = app => {
             const { cart } = req;
             res.send(cart.items);
         } catch (error) {
-            res.send(error.message);
+            res.status(500).send(error.message);
         }
     });
 
@@ -65,14 +65,14 @@ module.exports = app => {
             const hasItem = cart?.items?.find(item => item.id == itemId);
             if (hasItem) {
                 console.log(cart.items)
-                return updateItem(req.cart.id, itemId, hasItem.qty + 1)
+                return res.send(await updateItem(req.cart.id, itemId, hasItem.qty + 1))
             }
 
 
             const addedItem = await addToCart(req.cart.id, itemId);
-            res.send(addedItem);
+            res.status(201).send(addedItem);
         } catch (error) {
-            res.send(error.message);
+            res.status(500).send(error.message);
         }
     });
     // Update product quantity in cart
@@ -83,7 +83,7 @@ module.exports = app => {
             const updatedItem = await updateItem(req.cart.id, itemId, qty);
             res.send(updatedItem);
         } catch (error) {
-            res.send(error.message)
+            res.status(500).send(error.message)
         }
     });
     // Remove item from cart
@@ -91,7 +91,7 @@ module.exports = app => {
         try {
             const { itemId } = req.params;
             const removedItem = await removeItem(req.cart.id, itemId);
-            res.send('Successfully removed item');
+            res.status(204); // Successfully removed item
         } catch (error) {
             res.send(error.message);
         }
