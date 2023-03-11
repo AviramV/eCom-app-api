@@ -20,7 +20,7 @@ module.exports = app => {
     router.get('/:orderId', async (req, res) => {
         try {
             const { orderId } = req.params;
-            const order = await getOrderByOrderId(orderId);
+            const order = await getOrderByOrderId(orderId, req.user.id);
             if (!order) return res.status(404).send('Order not found');
             res.send(order);
         } catch (error) {
@@ -30,9 +30,10 @@ module.exports = app => {
     
     router.put('/:orderId', async (req, res) => {
         try {
+            const userId = req.user.id;
             const { orderId } = req.params;
             const { status } = req.body;
-            const order = await updtaeOrderStatus(orderId, status);
+            const order = await updtaeOrderStatus(orderId, status, userId);
             if (!order) return res.status(404).send('Order not found');
             res.send(order);
         } catch (error) {
