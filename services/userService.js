@@ -30,5 +30,11 @@ module.exports = {
 
     async deleteUser(id) {
         return db.query('DELETE FROM users WHERE id = $1', [id]);
+    },
+
+    isMyData(req, res, next) {
+        const { id } = req.params;
+        if(req.user.id != id) return res.status(403).send('Can only change your own data');
+        next()
     }
 }

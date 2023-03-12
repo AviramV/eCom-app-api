@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { getUserById, updateUser, deleteUser } = require('../services/userService');
+const { getUserById, updateUser, deleteUser, isMyData } = require('../services/userService');
+const { isLoggedIn } = require('../services/authService');
 
 module.exports = (app) => {
-    app.use('/user', router);
+    app.use('/user', isLoggedIn, router);
 
     router.get('/:id', async (req, res) => {
         try {
@@ -19,7 +20,7 @@ module.exports = (app) => {
         }
     });
 
-    router.put('/:id', async (req, res) => {
+    router.put('/:id', isMyData, async (req, res) => {
         try {
             const { id } = req.params;
             const data = req.body;
@@ -34,7 +35,7 @@ module.exports = (app) => {
         }
     });
 
-    router.delete('/:id', async (req, res) => {
+    router.delete('/:id', isMyData, async (req, res) => {
         try {
             const { id } = req.params;
 
