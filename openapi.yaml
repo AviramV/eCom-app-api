@@ -1,0 +1,559 @@
+openapi: 3.0.3
+info:
+  title: eComm REST API
+  version: 1.0.0
+  description: |-
+    An e-commerce application REST API that allows users to perform various CRUD
+    operations such as registering an account, browsing products for sale, etc. 
+    <br>
+    ## Authentication & Authorization 
+    This API uses cookies to authenticate client requests and maintain session information.
+    <br>
+    Most of the endpoints in this API require an authenticated session to exist.
+    <br>
+    Unfortunately, [Swagger UI doesn't support cookie authentication for "try it out" requests](https://swagger.io/docs/specification/authentication/cookie-authentication/) due to browser security restrictions.
+    <br>
+    This means that to test endpoints marked as requiring authentication, a tool like [Postman](https://www.postman.com/) or [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) would have to be used.
+    <br>
+    All other endpoints can be tested directly from this page using the "try it out" feature.
+
+
+
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      name: connect.sid
+      in: cookie
+
+paths:
+  /register:
+    summary: Register a new user
+    post:
+      summary: Registers a new user
+      description: Creates a new user in the database with the supplied credentials
+      operationId: register
+      requestBody:
+        description: Must inclcude `username` and `password`. *Optional:* `email`.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  description: Username
+                  type: string
+                password:
+                  description: password
+                  type: string
+                email:
+                  description: email address
+                  type: string
+              required:
+                - username
+                - password
+            example:
+              username: testUser
+              password: 10102020aabb
+              email: testUser@test.com
+      responses:
+        '201':
+          description: Successfully registered user
+        '409':
+          description: Conflict! User already exists
+        '500':
+          description: Internal error
+      tags:
+        - Authentication
+  /login:
+    summary: Login
+    post:
+      summary: Logs in a registered user
+      operationId: login
+      requestBody:
+        description: User login
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  description: Username
+                  type: string
+                password:
+                  description: password
+                  type: string
+      responses:
+        '200':
+          description: Successfully logged in
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized. Invalid username/password
+      tags:
+        - Authentication
+    get:
+      summary: Checks for an active user session
+      security:
+          - cookieAuth: []
+      responses:
+        '200':
+          description: Active user session found
+        '404':
+          description: No active session found
+      tags:
+        - Authentication
+  /logout:
+    summary: Logout
+    post:
+      summary: Logs out current logged-in user session
+      security:
+          - cookieAuth: []
+      operationId: logout
+      responses:
+        '200':
+          description: Successfully logged out
+        '401':
+          description: Unauthorized (no active user to log out)
+      tags:
+        - Authentication
+  /products:
+    summary: Product CRUD operations
+    post:
+      summary: Creates a new product listing in the database
+      security:
+          - cookieAuth: []
+      operationId: addProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                productName:
+                  description: The new product's name
+                  type: string
+                price:
+                  description: The new produc's price
+                  type: number
+      responses:
+        '201':
+          description: Successfully created new product
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    description: The new product's id
+                    type: integer
+                  name:
+                    description: The new products name
+                    type: string
+                  price:
+                    description: The new products price
+                    type: string
+        '500':
+          description: Error creating new product
+      tags:
+        - Products
+    get:
+      summary: Returns the complete list of products form the database
+      description: ''
+      operationId: getAllProducts
+      responses:
+        '200':
+          description: Successfull Operation
+          content:
+            application/json:
+              examples:
+                List of all products:
+                  value: |-
+                    [
+                      {
+                        "id": 1,
+                        "name": "computer",
+                        "price": "1234"
+                      },
+                      {
+                        "id": 2,
+                        "name": "mobile phone",
+                        "price": "700"
+                      },
+                      {
+                        "id": 3,
+                        "name": "couch",
+                        "price": "350"
+                      },
+                      {
+                        "id": 4,
+                        "name": "chair",
+                        "price": "100"
+                      },
+                      {
+                        "id": 5,
+                        "name": "cheese",
+                        "price": "2.35"
+                      }
+                    ]
+        '500':
+          description: Internal error
+      tags:
+        - Products
+  /products/{productId}:
+    get:
+      summary: Get product by ID
+      description: Returns a single product
+      operationId: getProductById
+      parameters:
+        - name: productId
+          in: path
+          description: ID of product to return
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              examples:
+                Returned product:
+                  value: |-
+                    {
+                      "id": 1,
+                      "name": "computer",
+                      "price": "1234"
+                    }
+        '404':
+          description: Product not found
+        '500':
+          description: Default error
+      tags:
+        - Products
+  /user/{userId}:
+    summary: User CRUD operations
+    parameters:
+      - name: userId
+        in: path
+        description: ID of user to return
+        required: true
+        schema:
+          type: integer
+    get:
+      security:
+          - cookieAuth: []
+      summary: Get user by ID
+      description: Returns a single user
+      operationId: getUserById
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              examples:
+                Returned user:
+                  value: |-
+                    {
+                      "id": 42,
+                      "email": "test@test.com",
+                      "user_name": "test",
+                      "password": "12345678"
+                    }
+        '401':
+          description: Log in first
+        '404':
+          description: User not found
+      tags:
+        - Users
+    put:
+      summary: Update existing user
+      security:
+          - cookieAuth: []
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              examples:
+                Updated user:
+                  value: |-
+                    {
+                      "id": 42,
+                      "email": "tester@testing.com",
+                      "user_name": "tester",
+                      "password": "987654321"
+                    }
+        '401':
+          description: Log in first
+        '404':
+          description: User not found
+        '500':
+          description: Default internal error
+      tags:
+        - Users
+    delete:
+      summary: Deletes existing user
+      security:
+          - cookieAuth: []
+      responses:
+        '204':
+          description: Successfully deleted user
+        '401':
+          description: Log in first
+        '404':
+          description: User not found
+        '500':
+          description: Default internal error
+      tags:
+        - Users
+  /cart:
+    post:
+      summary: Create a new cart
+      description: >-
+        Returns a cart object. Must be logged in to access. A user can only have
+        one cart at all times.
+      security:
+          - cookieAuth: []
+      tags:
+        - Carts
+      responses:
+        '201':
+          description: Successfully created cart
+          content:
+            application/json:
+              example:
+                id: 1
+                user_id: 42
+                created: '2023-03-06 22:25:45.81'
+        '401':
+          description: Log in first
+        '409':
+          description: Already has an active cart
+    get:
+      summary: Get cart contents
+      description: Returns an array of cart contents for the logged-in user
+      tags:
+        - Carts
+      security:
+          - cookieAuth: []
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              example:
+                - id: 9
+                  name: strainer
+                  price: '3.5'
+                  qty: 1
+                - id: 4
+                  name: chair
+                  price: '100'
+                  qty: 1
+  /cart/{productId}:
+    parameters:
+      - name: productId
+        in: path
+        required: true
+        schema:
+          type: integer
+    post:
+      summary: Add item to cart
+      description: >-
+        Adds a product item to the logged-in user's cart. Returns a cart item
+        object.
+      security:
+          - cookieAuth: []
+      tags:
+        - Carts
+      responses:
+        '200':
+          description: Successfully added item to cart
+          content:
+            application/json:
+              example:
+                id: 29
+                cart_id: 6
+                product_id: 2
+                qty: 1
+        '401':
+          description: Log in first
+    put:
+      summary: Update item quantity in cart
+      description: >-
+        Updates a product item's quantity in the logged-in user's cart. Returns
+        a cart item object.
+      security:
+          - cookieAuth: []
+      tags:
+        - Carts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                qty:
+                  description: item quantity
+                  type: integer
+            example:
+              qty: 15
+      responses:
+        '200':
+          description: Successfully updated item quantity in cart
+          content:
+            application/json:
+              example:
+                id: 29
+                cart_id: 6
+                product_id: 2
+                qty: 15
+        '401': 
+          description: Log in first
+    delete:
+      tags:
+        - Carts
+      summary: Delete item form cart
+      description: Deletes a product from the logged-in user's cart
+      security:
+          - cookieAuth: []
+      responses:
+        '204':
+          description: Successfully removed item
+        '401':
+          description: Log in first
+  /cart/checkout:
+    post:
+      summary: Checkout cart items
+      description: >-
+        Creates a new order form the active cart's items, and deletes the cart.
+        Must be logged in.
+      security:
+        - cookieAuth: []
+      tags:
+        - Carts
+      responses:
+        '200':
+          description: New order successfully created
+          content:
+            application/json:
+              example:
+                id: 15
+                status: open
+                user_id: 114
+                total: '725.70'
+                created: '2023-03-11T21:30:52.713Z'
+                modified: null
+        '401':
+          description: Log in first
+  /orders:
+    get:
+      tags:
+        - Orders
+      summary: Get user orders
+      description: Returns an array of all orders (of all statuses) for the logged-in user
+      security:
+          - cookieAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                - id: 14
+                  status: open
+                  user_id: 114
+                  total: '722.00'
+                  created: '2023-03-06T20:26:41.386Z'
+                  modified: null
+                - id: 13
+                  status: fulfilled
+                  user_id: 114
+                  total: '4966.68'
+                  created: '2023-03-06T20:25:00.522Z'
+                  modified: '2023-03-06T21:57:47.567Z'
+                - id: 15
+                  status: open
+                  user_id: 114
+                  total: '725.70'
+                  created: '2023-03-11T21:30:52.713Z'
+                  modified: null
+        '401':
+          description: Log in first
+        '404':
+          description: No orders found
+  /orders/{orderId}:
+    parameters:
+      - name: orderId
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags:
+        - Orders
+      summary: Get order by ID
+      description: Returns an order object specified by the id, for the logged-in user
+      security:
+          - cookieAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                id: 12
+                status: open
+                user_id: 42
+                total: '100.00'
+                created: '2023-03-06T13:10:47.681Z'
+                modified: null
+        '401':
+          description: Log in first
+        '404':
+          description: Order not found
+    put:
+      tags:
+        - Orders
+      summary: Update order status
+      description: Update an order's status by order ID
+      security:
+          - cookieAuth: []
+      requestBody:
+        description: >-
+          An order's status can either be `open`, `fulfilled`, or `caceled`.
+          Once an order's status is changed, the `modified` field of the order
+          is also automatically updated with the current date and time.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  description: order status
+                  type: string
+            example:
+              status: fulfilled
+      responses:
+        '200':
+          description: Successfully updated order status
+          content:
+            application/json:
+              example:
+                id: 13
+                status: fulfilled
+                user_id: 114
+                total: '4966.68'
+                created: '2023-03-06T20:25:00.522Z'
+                modified: '2023-03-11T22:11:17.264Z'
+        '401':
+          description: Log in first
+        '404':
+          description: Order not found
