@@ -13,7 +13,7 @@ module.exports = {
 
     async getCartByUserId(userId) {
         const response = await db.query(`SELECT * FROM carts WHERE user_id = $1`, [userId]);
-        if (!response.rows.length) return null; //throw Error("Couldn't get cart");
+        if (!response.rows.length) return null;
         return response.rows[0];
     },
 
@@ -24,7 +24,7 @@ module.exports = {
                             WHERE carts_products.cart_id = $1`;
         const values = [cartId];
         const items = await db.query(statement, values);
-        if (!items.rows.length) return null; //throw Error('Cart is empty')
+        if (!items.rows.length) return null;
         return items.rows;
     },
 
